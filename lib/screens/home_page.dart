@@ -1,7 +1,7 @@
 // lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
+import 'package:oushadhi/main.dart';
 import 'package:oushadhi/models/products.dart';
-import '../main.dart';
 import '../widgets/product_card.dart';
 import '../core/colors.dart';
 
@@ -71,14 +71,19 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Auto-slide every 4 seconds
+    _startAutoPlay();
+  }
+
+  void _startAutoPlay() {
     Future.delayed(const Duration(seconds: 4), () {
-      if (mounted) {
-        _pageController.nextPage(
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.easeInOut,
-        );
-      }
+      if (!mounted) return;
+      int nextPage = (_currentPage + 1) % banners.length;
+      _pageController.animateToPage(
+        nextPage,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOut,
+      );
+      _startAutoPlay();
     });
   }
 
@@ -90,280 +95,361 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isDesktop = size.width > 1100;
+    final isTablet = size.width > 600 && size.width <= 1100;
+
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text(
-          "Oushadhi",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 26,
-            color: AppColors.primaryGreen,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Stack(
+      body: CustomScrollView(
+        slivers: [
+          // Fixed Top Bar (AppBar + Search + Icons)
+          SliverAppBar(
+            pinned: true,
+            floating: true,
+            backgroundColor: Colors.white,
+            elevation: 2,
+            shadowColor: Colors.black26,
+            title: Row(
               children: [
-                const Icon(Icons.notifications_outlined, size: 28),
-                Positioned(
-                  right: 6,
-                  top: 6,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Text(
-                      "3",
-                      style: TextStyle(color: Colors.white, fontSize: 10),
-                    ),
+                Text(
+                  "Oushadhi",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: isDesktop ? 32 : 26,
+                    color: AppColors.primaryGreen,
                   ),
                 ),
+                if (!isDesktop) const Spacer(),
               ],
             ),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Notifications clicked")),
-              );
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Search Bar
-            const TextField(
-              decoration: InputDecoration(
-                hintText: "Search products",
-                prefixIcon: Icon(Icons.search),
-                suffixIcon: Icon(Icons.camera_alt_outlined),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderSide: BorderSide.none,
-                  borderRadius: BorderRadius.all(Radius.circular(30)),
+            actions: isDesktop
+                ? null
+                : [
+                    IconButton(
+                      icon: Stack(
+                        children: [
+                          const Icon(Icons.notifications_outlined, size: 28),
+                          Positioned(
+                            right: 6,
+                            top: 6,
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Text(
+                                "3",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      onPressed: () {},
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.favorite_border),
+                      onPressed: () {},
+                    ),
+                    IconButton(
+                      icon: Badge(
+                        label: Text(widget.cart.length.toString()),
+                        isLabelVisible: widget.cart.isNotEmpty,
+                        child: const Icon(Icons.shopping_cart_outlined),
+                      ),
+                      onPressed: () {},
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(70),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 60 : 16,
+                  vertical: 12,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black12, blurRadius: 8),
+                          ],
+                        ),
+                        child: const TextField(
+                          decoration: InputDecoration(
+                            hintText:
+                                "Search Ayurvedic products, oils, herbs...",
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: AppColors.primaryGreen,
+                            ),
+                            suffixIcon: Icon(Icons.camera_alt_outlined),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(vertical: 14),
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (isDesktop) ...[
+                      const SizedBox(width: 24),
+                      IconButton(
+                        icon: const Icon(Icons.notifications_outlined),
+                        onPressed: () {},
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.favorite_border),
+                        onPressed: () {},
+                      ),
+                      IconButton(
+                        icon: Badge(
+                          label: Text(widget.cart.length.toString()),
+                          child: const Icon(Icons.shopping_cart_outlined),
+                        ),
+                        onPressed: () {},
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+          ),
 
-            // Auto-Sliding Banner with Zoom Effect
-            SizedBox(
-              height: 200,
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() => _currentPage = index % banners.length);
-                  // Auto-play next
-                  Future.delayed(const Duration(seconds: 4), () {
-                    if (mounted) {
-                      _pageController.nextPage(
-                        duration: const Duration(milliseconds: 600),
-                        curve: Curves.easeInOut,
-                      );
-                    }
-                  });
-                },
-                itemBuilder: (context, index) {
-                  final banner = banners[index % banners.length];
-                  return AnimatedBannerItem(
-                    title: banner["title"]!,
-                    subtitle: banner["subtitle"]!,
-                    imageUrl: banner["image"]!,
-                  );
-                },
+          // Main Content
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? 60 : 16,
+                vertical: 20,
               ),
-            ),
-
-            // Page Indicator Dots
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(banners.length, (i) {
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: _currentPage == i ? 24 : 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: _currentPage == i
-                        ? AppColors.primaryGreen
-                        : Colors.grey[400],
-                    borderRadius: BorderRadius.circular(4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Banner Slider
+                  SizedBox(
+                    height: isDesktop ? 400 : 220,
+                    child: PageView.builder(
+                      controller: _pageController,
+                      onPageChanged: (i) =>
+                          setState(() => _currentPage = i % banners.length),
+                      itemBuilder: (ctx, i) {
+                        final banner = banners[i % banners.length];
+                        return AnimatedBannerItem(
+                          title: banner["title"]!,
+                          subtitle: banner["subtitle"]!,
+                          imageUrl: banner["image"]!,
+                          isDesktop: isDesktop,
+                        );
+                      },
+                    ),
                   ),
-                );
-              }),
-            ),
-            const SizedBox(height: 30),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      banners.length,
+                      (i) => AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: _currentPage == i ? 30 : 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: _currentPage == i
+                              ? AppColors.primaryGreen
+                              : Colors.grey[400],
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
 
-            // Must Try Brands
-            const Text(
-              "Must Try Brands",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 140,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: brands
-                    .map((brand) => _brandTile(brand['name']!, brand['img']!))
-                    .toList(),
-              ),
-            ),
-            const SizedBox(height: 30),
+                  // Must Try Brands
+                  Text(
+                    "Must Try Brands",
+                    style: TextStyle(
+                      fontSize: isDesktop ? 28 : 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    height: 160,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: brands.length,
+                      itemBuilder: (ctx, i) => _brandTile(
+                        brands[i]['name']!,
+                        brands[i]['img']!,
+                        isDesktop,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
 
-            // Featured Products
-            const Text(
-              "Featured Products",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 2,
-                childAspectRatio: 0.75,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
+                  // Featured Products
+                  Text(
+                    "Featured Products",
+                    style: TextStyle(
+                      fontSize: isDesktop ? 28 : 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: isDesktop
+                          ? 6
+                          : isTablet
+                          ? 4
+                          : 2,
+                      childAspectRatio: isDesktop ? 0.8 : 0.75,
+                      crossAxisSpacing: 20,
+                      mainAxisSpacing: 20,
+                    ),
+                    itemCount: ayurvedicProducts.length,
+                    itemBuilder: (ctx, i) => ProductCard(
+                      product: ayurvedicProducts[i],
+                      onAdd: () {
+                        final existing = widget.cart
+                            .where(
+                              (c) => c.product.id == ayurvedicProducts[i].id,
+                            )
+                            .firstOrNull;
+                        if (existing != null) {
+                          existing.quantity++;
+                        } else {
+                          widget.cart.add(
+                            CartItem(product: ayurvedicProducts[i]),
+                          );
+                        }
+                        widget.onCartUpdate();
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 100),
+                ],
               ),
-              itemCount: ayurvedicProducts.length,
-              itemBuilder: (ctx, i) => ProductCard(
-                product: ayurvedicProducts[i],
-                onAdd: () {
-                  final existing = widget.cart
-                      .where((c) => c.product.id == ayurvedicProducts[i].id)
-                      .firstOrNull;
-                  if (existing != null) {
-                    existing.quantity++;
-                  } else {
-                    widget.cart.add(CartItem(product: ayurvedicProducts[i]));
-                  }
-                  widget.onCartUpdate();
-                },
-              ),
             ),
-            const SizedBox(height: 80),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  static Widget _brandTile(String name, String imgUrl) => Container(
-    width: 120,
-    margin: const EdgeInsets.only(right: 16),
+  Widget _brandTile(String name, String imgUrl, bool isDesktop) => Container(
+    width: isDesktop ? 180 : 130,
+    margin: const EdgeInsets.only(right: 20),
+    padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8)],
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black12,
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
     ),
     child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(30),
-          child: Image.network(
-            imgUrl,
-            height: 54,
-            width: 54,
-            fit: BoxFit.contain,
+        CircleAvatar(
+          radius: isDesktop ? 40 : 32,
+          backgroundImage: NetworkImage(imgUrl),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          name,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: isDesktop ? 18 : 14,
           ),
         ),
-        const SizedBox(height: 8),
-        Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
       ],
     ),
   );
 }
 
-// Beautiful Animated Banner Item with Zoom Effect
 class AnimatedBannerItem extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String imageUrl;
+  final String title, subtitle, imageUrl;
+  final bool isDesktop;
 
   const AnimatedBannerItem({
     super.key,
     required this.title,
     required this.subtitle,
     required this.imageUrl,
+    this.isDesktop = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
+      margin: const EdgeInsets.symmetric(horizontal: 8),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Background Image with Zoom Animation
             AnimatedScale(
-              scale: 1.08,
-              duration: const Duration(seconds: 8),
+              scale: 1.1,
+              duration: const Duration(seconds: 10),
               curve: Curves.easeInOut,
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, progress) {
-                  return progress == null
-                      ? child
-                      : const Center(
-                          child: CircularProgressIndicator(color: Colors.white),
-                        );
-                },
-              ),
+              child: Image.network(imageUrl, fit: BoxFit.cover),
             ),
-            // Dark Overlay
             Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: const LinearGradient(
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
                   colors: [Colors.black87, Colors.transparent],
                 ),
               ),
             ),
-            // Text Content
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(isDesktop ? 40 : 20),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
-                      fontSize: 26,
+                      fontSize: isDesktop ? 36 : 26,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
                     subtitle,
-                    style: const TextStyle(color: Colors.white70, fontSize: 16),
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: isDesktop ? 20 : 16,
+                    ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {},
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: AppColors.primaryGreen,
                     ),
-                    child: const Text("Shop Now"),
+                    child: Text(
+                      "Shop Now",
+                      style: TextStyle(fontSize: isDesktop ? 18 : 16),
+                    ),
                   ),
                 ],
               ),
