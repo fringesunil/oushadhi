@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:oushadhi/main.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../core/colors.dart';
 
 class CartScreen extends StatefulWidget {
@@ -12,10 +13,66 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
+  late Razorpay _razorpay;
   double get total => widget.cart.fold(
     0,
     (sum, item) => sum + item.product.price * item.quantity,
   );
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Payment Successful: ${response.paymentId}")),
+    );
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Payment Failed: ${response.message}")),
+    );
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("External Wallet: ${response.walletName}")),
+    );
+  }
+
+  void _openCheckout(double amount) {
+    var options = {
+      'key': 'rzp_test_eKhFJmDgLky7dl',
+      'amount': (amount * 100).toInt(),
+      'name': 'Oushadhi',
+      'description': 'Payment for cart items',
+      'prefill': {'contact': '1234567890', 'email': 'user@example.com'},
+      'external': {
+        'wallets': ['paytm'],
+      },
+    };
+
+    try {
+      _razorpay.open(options);
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: $e")));
+    }
+  }
+
+  @override
+  void dispose() {
+    _razorpay.clear();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,25 +156,27 @@ class _CartScreenState extends State<CartScreen> {
                   minimumSize: const Size(double.infinity, 50),
                 ),
                 onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => const AlertDialog(
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.check_circle,
-                            size: 80,
-                            color: Colors.green,
-                          ),
-                          Text(
-                            "Payment done successfully!",
-                            style: TextStyle(fontSize: 18),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
+                  double finalamount = total + 50;
+                  _openCheckout(finalamount);
+                  // showDialog(
+                  //   context: context,
+                  //   builder: (_) => const AlertDialog(
+                  //     content: Column(
+                  //       mainAxisSize: MainAxisSize.min,
+                  //       children: [
+                  //         Icon(
+                  //           Icons.check_circle,
+                  //           size: 80,
+                  //           color: Colors.green,
+                  //         ),
+                  //         Text(
+                  //           "Payment done successfully!",
+                  //           style: TextStyle(fontSize: 18),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // );
                 },
                 child: Text(
                   "Pay ₹${(total + 50).toStringAsFixed(0)} securely",
