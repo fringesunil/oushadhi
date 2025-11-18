@@ -11,6 +11,7 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var size = MediaQuery.of(context).size;
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
@@ -39,7 +40,7 @@ class ProductCard extends StatelessWidget {
               ),
               child: Image.network(
                 product.imageUrl,
-                height: 120,
+                height: size.height * 0.12,
                 width: double.infinity,
                 fit: BoxFit.fill,
               ),
@@ -57,7 +58,7 @@ class ProductCard extends StatelessWidget {
                     product.brand,
                     style: TextStyle(color: AppColors.greyText, fontSize: 12),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 2),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
