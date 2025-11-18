@@ -31,7 +31,7 @@ class CategoriesScreen extends StatelessWidget {
     };
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: AppColors.backgroundWhite,
       appBar: AppBar(
         backgroundColor: AppColors.primaryGreen,
         elevation: 0,
@@ -141,7 +141,7 @@ class CategoryProductsScreen extends StatelessWidget {
         .toList();
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: AppColors.backgroundWhite,
       appBar: AppBar(
         backgroundColor: AppColors.primaryGreen,
         elevation: 0,

@@ -99,80 +99,140 @@ class _HomeScreenState extends State<HomeScreen> {
     final isDesktop = size.width > 1100;
     final isTablet = size.width > 600 && size.width <= 1100;
 
+    if (isDesktop) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 28), // Vertical gap below main app top bar
+            SizedBox(
+              height: 400,
+              child: PageView.builder(
+                controller: _pageController,
+                onPageChanged: (i) =>
+                    setState(() => _currentPage = i % banners.length),
+                itemBuilder: (ctx, i) {
+                  final banner = banners[i % banners.length];
+                  return AnimatedBannerItem(
+                    title: banner["title"]!,
+                    subtitle: banner["subtitle"]!,
+                    imageUrl: banner["image"]!,
+                    isDesktop: isDesktop,
+                  );
+                },
+                itemCount: banners.length,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                banners.length,
+                (i) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: _currentPage == i ? 30 : 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: _currentPage == i
+                        ? AppColors.primaryGreen
+                        : Colors.grey[400],
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+            Text(
+              "Must Try Brands",
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              height: 160,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: brands.length,
+                itemBuilder: (ctx, i) => _brandTile(
+                  brands[i]['name']!,
+                  brands[i]['img']!,
+                  isDesktop,
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+            Text(
+              "Featured Products",
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 6,
+                childAspectRatio: 0.8,
+                crossAxisSpacing: 20,
+                mainAxisSpacing: 20,
+              ),
+              itemCount: ayurvedicProducts.length,
+              itemBuilder: (ctx, i) => ProductCard(
+                product: ayurvedicProducts[i],
+                onAdd: () {
+                  final existing = widget.cart
+                      .where((c) => c.product.id == ayurvedicProducts[i].id)
+                      .firstOrNull;
+                  if (existing != null) {
+                    existing.quantity++;
+                  } else {
+                    widget.cart.add(CartItem(product: ayurvedicProducts[i]));
+                  }
+                  widget.onCartUpdate();
+                },
+              ),
+            ),
+            const SizedBox(height: 100),
+          ],
+        ),
+      );
+    }
+
+    // Else (Tablet, Mobile): Show as before, with SliverAppBar search bar, etc.
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: AppColors.backgroundWhite,
       body: CustomScrollView(
         slivers: [
-          // Fixed Top Bar (AppBar + Search + Icons)
+          // SliverAppBar for mobile/tablet with search, etc.
           SliverAppBar(
             pinned: true,
             floating: true,
             backgroundColor: Colors.white,
             elevation: 2,
             shadowColor: Colors.black26,
-            title: Row(
-              children: [
-                Text(
-                  "Oushadhi",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: isDesktop ? 32 : 26,
-                    color: AppColors.primaryGreen,
-                  ),
-                ),
-                if (!isDesktop) const Spacer(),
-              ],
+            title: const Text(
+              "Oushadhi",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+                color: AppColors.primaryGreen,
+              ),
             ),
-            actions: isDesktop
-                ? null
-                : [
-                    IconButton(
-                      icon: Stack(
-                        children: [
-                          const Icon(Icons.notifications_outlined, size: 28),
-                          Positioned(
-                            right: 6,
-                            top: 6,
-                            child: Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Text(
-                                "3",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      onPressed: () {},
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.favorite_border),
-                      onPressed: () {},
-                    ),
-                    IconButton(
-                      icon: Badge(
-                        label: Text(widget.cart.length.toString()),
-                        isLabelVisible: widget.cart.isNotEmpty,
-                        child: const Icon(Icons.shopping_cart_outlined),
-                      ),
-                      onPressed: () {},
-                    ),
-                    const SizedBox(width: 8),
-                  ],
+            actions: [
+              IconButton(
+                icon: Badge(
+                  label: Text(widget.cart.length.toString()),
+                  isLabelVisible: widget.cart.isNotEmpty,
+                  child: const Icon(Icons.shopping_cart_outlined),
+                ),
+                onPressed: () {},
+              ),
+              const SizedBox(width: 8),
+            ],
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(70),
               child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isDesktop ? 60 : 16,
-                  vertical: 12,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
                     Expanded(
@@ -193,50 +253,25 @@ class _HomeScreenState extends State<HomeScreen> {
                               Icons.search,
                               color: AppColors.primaryGreen,
                             ),
-                            suffixIcon: Icon(Icons.camera_alt_outlined),
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(vertical: 14),
                           ),
                         ),
                       ),
                     ),
-                    if (isDesktop) ...[
-                      const SizedBox(width: 24),
-                      IconButton(
-                        icon: const Icon(Icons.notifications_outlined),
-                        onPressed: () {},
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.favorite_border),
-                        onPressed: () {},
-                      ),
-                      IconButton(
-                        icon: Badge(
-                          label: Text(widget.cart.length.toString()),
-                          child: const Icon(Icons.shopping_cart_outlined),
-                        ),
-                        onPressed: () {},
-                      ),
-                    ],
                   ],
                 ),
               ),
             ),
           ),
-
-          // Main Content
           SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: isDesktop ? 60 : 16,
-                vertical: 20,
-              ),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Banner Slider
                   SizedBox(
-                    height: isDesktop ? 400 : 220,
+                    height: 220,
                     child: PageView.builder(
                       controller: _pageController,
                       onPageChanged: (i) =>
@@ -247,9 +282,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           title: banner["title"]!,
                           subtitle: banner["subtitle"]!,
                           imageUrl: banner["image"]!,
-                          isDesktop: isDesktop,
+                          isDesktop: false,
                         );
                       },
+                      itemCount: banners.length,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -272,14 +308,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 40),
-
-                  // Must Try Brands
-                  Text(
+                  const Text(
                     "Must Try Brands",
-                    style: TextStyle(
-                      fontSize: isDesktop ? 28 : 22,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 20),
                   SizedBox(
@@ -290,33 +321,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       itemBuilder: (ctx, i) => _brandTile(
                         brands[i]['name']!,
                         brands[i]['img']!,
-                        isDesktop,
+                        false,
                       ),
                     ),
                   ),
                   const SizedBox(height: 40),
-
-                  // Featured Products
-                  Text(
+                  const Text(
                     "Featured Products",
-                    style: TextStyle(
-                      fontSize: isDesktop ? 28 : 22,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 20),
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: isDesktop
-                          ? 6
-                          : isTablet
-                          ? 4
-                          : 2,
-                      childAspectRatio: isDesktop ? 0.8 : 0.75,
-                      crossAxisSpacing: 20,
-                      mainAxisSpacing: 20,
+                      crossAxisCount: isTablet ? 4 : 2,
+                      childAspectRatio: 0.75,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
                     ),
                     itemCount: ayurvedicProducts.length,
                     itemBuilder: (ctx, i) => ProductCard(
