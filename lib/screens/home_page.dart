@@ -1,15 +1,44 @@
+// lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
-import 'package:oushadhi/main.dart';
 import 'package:oushadhi/models/products.dart';
-
+import '../main.dart';
 import '../widgets/product_card.dart';
 import '../core/colors.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final List<CartItem> cart;
   final VoidCallback onCartUpdate;
 
   const HomeScreen({super.key, required this.cart, required this.onCartUpdate});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  static const List<Map<String, String>> banners = [
+    {
+      "title": "Monsoon Wellness",
+      "subtitle": "Boost Immunity Naturally",
+      "image":
+          "https://thumbs.dreamstime.com/b/ayurvedic-background-natural-healing-herbs-elements-ai-generated-ayurveda-k-wallpaper-banner-ayurvedic-herbal-313395798.jpg",
+    },
+    {
+      "title": "Glow with Ayurveda",
+      "subtitle": "100% Pure & Natural",
+      "image":
+          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTJ3JPci3MGqfo9A4EDOCKjcPvn5TRQ7PoSmQ&s",
+    },
+    {
+      "title": "Summer Sale",
+      "subtitle": "Up to 40% Off on Best Sellers",
+      "image":
+          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRXEf41c65tm0ZiQ0wOPOtYERDdughExZt65w&s",
+    },
+  ];
 
   static const List<Map<String, String>> brands = [
     {
@@ -40,27 +69,82 @@ class HomeScreen extends StatelessWidget {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Auto-slide every 4 seconds
+    Future.delayed(const Duration(seconds: 4), () {
+      if (mounted) {
+        _pageController.nextPage(
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.bg,
       appBar: AppBar(
-        // backgroundColor: AppColors.primaryGreen,
-        // centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: const Text(
           "Oushadhi",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 26,
+            color: AppColors.primaryGreen,
+          ),
         ),
-        elevation: 0,
+        actions: [
+          IconButton(
+            icon: Stack(
+              children: [
+                const Icon(Icons.notifications_outlined, size: 28),
+                Positioned(
+                  right: 6,
+                  top: 6,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Text(
+                      "3",
+                      style: TextStyle(color: Colors.white, fontSize: 10),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Notifications clicked")),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
-      backgroundColor: AppColors.bg,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Search Bar
             const TextField(
               decoration: InputDecoration(
                 hintText: "Search products",
                 prefixIcon: Icon(Icons.search),
+                suffixIcon: Icon(Icons.camera_alt_outlined),
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -71,57 +155,56 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Banner
-            Container(
+            // Auto-Sliding Banner with Zoom Effect
+            SizedBox(
               height: 200,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                image: const DecorationImage(
-                  image: NetworkImage(
-                    "https://www.shutterstock.com/image-vector/ayurveda-concept-illustration-ayurvedic-healing-600nw-2196249447.jpg",
-                  ),
-                  fit: BoxFit.cover,
-                ),
+              child: PageView.builder(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() => _currentPage = index % banners.length);
+                  // Auto-play next
+                  Future.delayed(const Duration(seconds: 4), () {
+                    if (mounted) {
+                      _pageController.nextPage(
+                        duration: const Duration(milliseconds: 600),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  });
+                },
+                itemBuilder: (context, index) {
+                  final banner = banners[index % banners.length];
+                  return AnimatedBannerItem(
+                    title: banner["title"]!,
+                    subtitle: banner["subtitle"]!,
+                    imageUrl: banner["image"]!,
+                  );
+                },
               ),
-              child: Stack(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: const LinearGradient(
-                        begin: Alignment.bottomLeft,
-                        colors: [Colors.black87, Colors.transparent],
-                      ),
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text(
-                          "Hello to Oushadhi",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+            ),
 
-                        SizedBox(height: 10),
-                        ElevatedButton(
-                          onPressed: null,
-                          child: Text("Shop Now"),
-                        ),
-                      ],
-                    ),
+            // Page Indicator Dots
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(banners.length, (i) {
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: _currentPage == i ? 24 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _currentPage == i
+                        ? AppColors.primaryGreen
+                        : Colors.grey[400],
+                    borderRadius: BorderRadius.circular(4),
                   ),
-                ],
-              ),
+                );
+              }),
             ),
             const SizedBox(height: 30),
 
+            // Must Try Brands
             const Text(
               "Must Try Brands",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -138,6 +221,7 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 30),
 
+            // Featured Products
             const Text(
               "Featured Products",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -156,18 +240,19 @@ class HomeScreen extends StatelessWidget {
               itemBuilder: (ctx, i) => ProductCard(
                 product: ayurvedicProducts[i],
                 onAdd: () {
-                  final existing = cart
+                  final existing = widget.cart
                       .where((c) => c.product.id == ayurvedicProducts[i].id)
                       .firstOrNull;
                   if (existing != null) {
                     existing.quantity++;
                   } else {
-                    cart.add(CartItem(product: ayurvedicProducts[i]));
+                    widget.cart.add(CartItem(product: ayurvedicProducts[i]));
                   }
-                  onCartUpdate();
+                  widget.onCartUpdate();
                 },
               ),
             ),
+            const SizedBox(height: 80),
           ],
         ),
       ),
@@ -199,4 +284,93 @@ class HomeScreen extends StatelessWidget {
       ],
     ),
   );
+}
+
+// Beautiful Animated Banner Item with Zoom Effect
+class AnimatedBannerItem extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String imageUrl;
+
+  const AnimatedBannerItem({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.imageUrl,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Background Image with Zoom Animation
+            AnimatedScale(
+              scale: 1.08,
+              duration: const Duration(seconds: 8),
+              curve: Curves.easeInOut,
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, progress) {
+                  return progress == null
+                      ? child
+                      : const Center(
+                          child: CircularProgressIndicator(color: Colors.white),
+                        );
+                },
+              ),
+            ),
+            // Dark Overlay
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: const LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [Colors.black87, Colors.transparent],
+                ),
+              ),
+            ),
+            // Text Content
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(color: Colors.white70, fontSize: 16),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppColors.primaryGreen,
+                    ),
+                    child: const Text("Shop Now"),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
