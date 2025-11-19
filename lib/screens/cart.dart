@@ -158,6 +158,19 @@ class _CartScreenState extends State<CartScreen> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
+                                if (item.product.stock <= 10) ...[
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 2.0),
+                                    child: Text(
+                                      'Only ${item.product.stock} left in stock',
+                                      style: TextStyle(
+                                        color: Colors.deepOrange,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
@@ -244,9 +257,11 @@ class _CartScreenState extends State<CartScreen> {
                     setState(() {});
                   },
                   onIncrement: () {
-                    item.quantity++;
-                    widget.onUpdate();
-                    setState(() {});
+                    if (item.quantity < item.product.stock) {
+                      item.quantity++;
+                      widget.onUpdate();
+                      setState(() {});
+                    }
                   },
                   onRemove: () {
                     widget.cart.removeAt(i);

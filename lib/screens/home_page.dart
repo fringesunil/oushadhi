@@ -179,17 +179,8 @@ class _HomeScreenState extends State<HomeScreen> {
               itemCount: ayurvedicProducts.length,
               itemBuilder: (ctx, i) => ProductCard(
                 product: ayurvedicProducts[i],
-                onAdd: () {
-                  final existing = widget.cart
-                      .where((c) => c.product.id == ayurvedicProducts[i].id)
-                      .firstOrNull;
-                  if (existing != null) {
-                    existing.quantity++;
-                  } else {
-                    widget.cart.add(CartItem(product: ayurvedicProducts[i]));
-                  }
-                  widget.onCartUpdate();
-                },
+                cart: widget.cart,
+                onCartUpdate: widget.onCartUpdate,
               ),
             ),
             const SizedBox(height: 100),
@@ -343,21 +334,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     itemCount: ayurvedicProducts.length,
                     itemBuilder: (ctx, i) => ProductCard(
                       product: ayurvedicProducts[i],
-                      onAdd: () {
-                        final existing = widget.cart
-                            .where(
-                              (c) => c.product.id == ayurvedicProducts[i].id,
-                            )
-                            .firstOrNull;
-                        if (existing != null) {
-                          existing.quantity++;
-                        } else {
-                          widget.cart.add(
-                            CartItem(product: ayurvedicProducts[i]),
-                          );
-                        }
-                        widget.onCartUpdate();
-                      },
+                      cart: widget.cart,
+                      onCartUpdate: widget.onCartUpdate,
                     ),
                   ),
                   const SizedBox(height: 100),

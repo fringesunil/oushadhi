@@ -1,30 +1,69 @@
 import 'package:flutter/material.dart';
+import 'package:oushadhi/main.dart';
 import '../models/products.dart';
 import '../screens/product_detail_screen.dart';
 import '../core/colors.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
-  final VoidCallback onAdd;
-
-  const ProductCard({super.key, required this.product, required this.onAdd});
-
+  final List<CartItem> cart;
+  final VoidCallback onCartUpdate;
+  const ProductCard({
+    super.key,
+    required this.product,
+    required this.cart,
+    required this.onCartUpdate,
+  });
   @override
   State<ProductCard> createState() => _ProductCardState();
 }
 
 class _ProductCardState extends State<ProductCard> {
+  int _getQuantityInCart() {
+    final found = widget.cart.where((c) => c.product.id == widget.product.id);
+    return found.isNotEmpty ? found.first.quantity : 0;
+  }
+
+  void _increment() {
+    final idx = widget.cart.indexWhere(
+      (c) => c.product.id == widget.product.id,
+    );
+    if (idx >= 0) {
+      widget.cart[idx].quantity++;
+    } else {
+      widget.cart.add(CartItem(product: widget.product));
+    }
+    widget.onCartUpdate();
+    setState(() {});
+  }
+
+  void _decrement() {
+    final idx = widget.cart.indexWhere(
+      (c) => c.product.id == widget.product.id,
+    );
+    if (idx >= 0) {
+      if (widget.cart[idx].quantity > 1) {
+        widget.cart[idx].quantity--;
+      } else {
+        widget.cart.removeAt(idx);
+      }
+      widget.onCartUpdate();
+      setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isDesktop = size.width > 1100;
     final isTablet = size.width > 600 && size.width <= 1100;
+    final qty = _getQuantityInCart();
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) =>
-              ProductDetailScreen(product: widget.product, onAdd: widget.onAdd),
+              ProductDetailScreen(product: widget.product, onAdd: () {}),
         ),
       ),
       child: Container(
@@ -145,28 +184,64 @@ class _ProductCardState extends State<ProductCard> {
                   const SizedBox(height: 10),
 
                   // ----------- Add to Cart Button -----------
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: widget.onAdd,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryGreen,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                  if (qty == 0)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _increment,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryGreen,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          elevation: 2,
                         ),
-                        elevation: 2,
-                      ),
-                      child: const Text(
-                        "Add",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
+                        child: const Text(
+                          "Add",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
+                    )
+                  else
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.remove),
+                          color: AppColors.primaryGreen,
+                          visualDensity: VisualDensity.compact,
+                          onPressed: _decrement,
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: AppColors.backgroundWhite,
+                          ),
+                          child: Text(
+                            '$qty',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add),
+                          color: AppColors.primaryGreen,
+                          visualDensity: VisualDensity.compact,
+                          onPressed: _increment,
+                        ),
+                      ],
                     ),
-                  ),
                 ],
               ),
             ),
